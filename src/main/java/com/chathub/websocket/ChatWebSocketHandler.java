@@ -4,6 +4,7 @@ import com.chathub.model.Channel;
 import com.chathub.model.User;
 import com.chathub.repository.ChannelRepository;
 import com.chathub.repository.UserRepository;
+import com.chathub.service.RateLimitService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
