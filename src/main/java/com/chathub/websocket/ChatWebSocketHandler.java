@@ -45,13 +45,17 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
         activeSessions.put(userId, session);
 
-        // Mark user online
-        userRepository.findByCustomId(userId)
-                .ifPresent(user -> {
-                    user.setOnline(true);
-                    user.setLastSeen(Instant.now().toString());
-                    userRepository.save(user);
-                });
+        try {
+            // Mark user online
+            userRepository.findByCustomId(userId)
+                    .ifPresent(user -> {
+                        user.setOnline(true);
+                        user.setLastSeen(Instant.now().toString());
+                        userRepository.save(user);
+                    });
+        } catch (Exception e) {
+            log.error("Error updating online status for user {}: {}", userId, e.getMessage());
+        }
 
         // Broadcast status on a separate thread — writing to the session during
         // afterConnectionEstablished can throw IllegalStateException (TEXT_PARTIAL_WRITING).
@@ -99,22 +103,28 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
         activeSessions.remove(userId);
 
-        // Mark user offline
-        userRepository.findByCustomId(userId)
-                .ifPresent(user -> {
-                    user.setOnline(false);
-                    user.setLastSeen(Instant.now().toString());
-                    userRepository.save(user);
-                });
+        try {
+            // Mark user offline
+            userRepository.findByCustomId(userId)
+                    .ifPresent(user -> {
+                        user.setOnline(false);
+                        user.setLastSeen(Instant.now().toString());
+                        userRepository.save(user);
+                    });
 
-        broadcastUserStatus(userId, false, null);
+            broadcastUserStatus(userId, false, null);
+        } catch (Exception e) {
+            log.error("Error updating status for disconnected user {}: {}", userId, e.getMessage());
+        }
+        
         log.info("WebSocket disconnected: userId={}, status={}", userId, status);
     }
 
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
-        log.error("WebSocket transport error: {}", exception.getMessage());
-        afterConnectionClosed(session, CloseStatus.SERVER_ERROR);
+        // Log the error but don't call afterConnectionClosed manually; 
+        // the framework will invoke afterConnectionClosed automatically.
+        log.error("WebSocket transport error for session {}: {}", session.getId(), exception.getMessage());
     }
 
     // ── Broadcast helpers ────────────────────────────────────────────────────
