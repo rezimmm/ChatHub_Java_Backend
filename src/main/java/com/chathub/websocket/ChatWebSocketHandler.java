@@ -24,6 +24,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private final UserRepository userRepository;
     private final ChannelRepository channelRepository;
     private final ObjectMapper objectMapper;
+    private final RateLimitService rateLimitService;
 
     // userId -> WebSocketSession
     private final Map<String, WebSocketSession> activeSessions = new ConcurrentHashMap<>();
@@ -72,6 +73,17 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         String userId = extractUserId(session);
         if (userId == null) return;
+
+        // Rate Limit Messages
+        if (!rateLimitService.resolveMessageBucket(userId).tryConsume(1)) {
+            log.warn("Rate limit exceeded for WebSocket user: {}", userId);
+            // Optionally send an error message back to the user
+            Map<String, Object> error = new HashMap<>();
+            error.put("type", "error");
+            error.put("message", "You are sending messages too fast. Slow down!");
+            session.sendMessage(new TextMessage(objectMapper.writeValueAsString(error)));
+            return;
+        }
 
         try {
             Map<String, Object> data = objectMapper.readValue(message.getPayload(), Map.class);

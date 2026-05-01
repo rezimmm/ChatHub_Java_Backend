@@ -19,6 +19,18 @@ public class WebConfig implements WebMvcConfigurer {
                 .maxAge(3600);
     }
 
+    private final RateLimitInterceptor rateLimitInterceptor;
+
+    public WebConfig(RateLimitInterceptor rateLimitInterceptor) {
+        this.rateLimitInterceptor = rateLimitInterceptor;
+    }
+
+    @Override
+    public void addInterceptors(org.springframework.web.servlet.config.annotation.InterceptorRegistry registry) {
+        registry.addInterceptor(rateLimitInterceptor)
+                .addPathPatterns("/api/**");
+    }
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // Serve uploaded files at /uploads/**
