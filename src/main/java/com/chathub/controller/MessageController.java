@@ -97,11 +97,4 @@ public class MessageController {
             @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(messageService.searchMessages(query, user));
     }
-
-    @PostMapping("/upload")
-    public ResponseEntity<Map<String, Object>> uploadFile(
-            @RequestParam("file") MultipartFile file,
-            @AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(fileService.uploadFile(file));
-    }
 }
