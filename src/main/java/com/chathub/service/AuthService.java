@@ -28,13 +28,6 @@ public class AuthService {
     private static final List<String> AVATAR_COLORS = List.of(
         "#7c3aed", "#0d9488", "#ec4899", "#f59e0b", "#3b82f6", "#ef4444"
     );
-    private static final List<String> AVATAR_URLS = List.of(
-        "https://images.unsplash.com/photo-1650913406617-bd9b0ab07d07?w=200&h=200&fit=crop",
-        "https://images.unsplash.com/photo-1771050889377-b68415885c64?w=200&h=200&fit=crop",
-        "https://images.unsplash.com/photo-1648293821367-b39c09679658?w=200&h=200&fit=crop",
-        "https://images.pexels.com/photos/4565706/pexels-photo-4565706.jpeg?w=200&h=200&fit=crop",
-        "https://images.pexels.com/photos/3228830/pexels-photo-3228830.jpeg?w=200&h=200&fit=crop"
-    );
 
     public Map<String, Object> register(RegisterRequest req) {
         String email = req.getEmail().toLowerCase().trim();
@@ -54,7 +47,6 @@ public class AuthService {
                 .username(sanitize(username))
                 .hashedPassword(passwordEncoder.encode(req.getPassword()))
                 .avatarColor(AVATAR_COLORS.get(rand.nextInt(AVATAR_COLORS.size())))
-                .avatarUrl(AVATAR_URLS.get(rand.nextInt(AVATAR_URLS.size())))
                 .build();
 
         userRepository.save(user);
