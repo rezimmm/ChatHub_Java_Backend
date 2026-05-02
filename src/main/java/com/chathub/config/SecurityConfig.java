@@ -61,7 +61,8 @@ public class SecurityConfig {
                     "/api/health",
                     "/uploads/**",
                     "/ws/**",
-                    "/api/ws/**"
+                    "/api/ws/**",
+                    "/api/support/report-bug"
                 ).permitAll()
                 // Everything else requires JWT
                 .anyRequest().authenticated()
