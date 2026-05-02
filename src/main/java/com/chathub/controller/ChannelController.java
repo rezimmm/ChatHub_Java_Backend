@@ -57,6 +57,22 @@ public class ChannelController {
         return ResponseEntity.ok(channelService.toggleFavorite(channelId, user));
     }
 
+    @DeleteMapping("/{channelId}")
+    public ResponseEntity<Map<String, Object>> deleteChannel(
+            @PathVariable String channelId,
+            @AuthenticationPrincipal User user) {
+        channelService.deleteChannel(channelId, user);
+        return ResponseEntity.ok(Map.of("success", true, "message", "Channel deleted"));
+    }
+
+    @PostMapping("/{channelId}/clear")
+    public ResponseEntity<Map<String, Object>> clearConversation(
+            @PathVariable String channelId,
+            @AuthenticationPrincipal User user) {
+        channelService.clearConversation(channelId, user);
+        return ResponseEntity.ok(Map.of("success", true, "message", "Conversation cleared"));
+    }
+
     @PostMapping("/{channelId}/members")
     public ResponseEntity<Map<String, Object>> addMember(
             @PathVariable String channelId,

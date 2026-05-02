@@ -23,4 +23,6 @@ public interface MessageRepository extends MongoRepository<Message, String> {
 
     @Query("{ 'channelId': { $in: ?0 }, 'content': { $regex: ?1, $options: 'i' } }")
     List<Message> searchInChannels(List<String> channelIds, String query, Sort sort);
+
+    void deleteByChannelId(String channelId);
 }

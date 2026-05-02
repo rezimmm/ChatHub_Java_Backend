@@ -5,6 +5,7 @@ import com.chathub.dto.ChannelUpdateRequest;
 import com.chathub.model.Channel;
 import com.chathub.model.User;
 import com.chathub.repository.ChannelRepository;
+import com.chathub.repository.MessageRepository;
 import com.chathub.repository.UserRepository;
 import com.chathub.websocket.ChatWebSocketHandler;
 import lombok.RequiredArgsConstructor;
@@ -21,9 +22,49 @@ import java.util.stream.Collectors;
 public class ChannelService {
 
     private final ChannelRepository channelRepository;
+    private final MessageRepository messageRepository;
     private final UserRepository userRepository;
     private final ChatWebSocketHandler wsHandler;
     private final PasswordEncoder passwordEncoder;
+
+    public void deleteChannel(String channelId, User currentUser) {
+        Channel ch = findOrThrow(channelId);
+        if (!ch.getCreatedBy().equals(currentUser.getId()))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the channel creator can delete it");
+        
+        // Broadcast deletion event
+        Map<String, Object> event = new HashMap<>();
+        event.put("type", "channel_deleted");
+        event.put("channel_id", channelId);
+        wsHandler.broadcastToChannel(event, channelId);
+
+        // Delete messages
+        messageRepository.deleteByChannelId(channelId);
+        
+        // Delete channel
+        channelRepository.delete(ch);
+    }
+
+    public void clearConversation(String channelId, User currentUser) {
+        Channel ch = findOrThrow(channelId);
+        // Either creator or any member can clear? Usually only creator or admin.
+        // Let's stick to creator for now or any member if it's a DM.
+        if (!ch.getCreatedBy().equals(currentUser.getId()) && !ch.isDm())
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the channel creator can clear messages");
+        
+        // Delete messages
+        messageRepository.deleteByChannelId(channelId);
+        
+        // Reset unread counts
+        ch.setUnreadCount(new HashMap<>());
+        channelRepository.save(ch);
+
+        // Broadcast clear event
+        Map<String, Object> event = new HashMap<>();
+        event.put("type", "messages_cleared");
+        event.put("channel_id", channelId);
+        wsHandler.broadcastToChannel(event, channelId);
+    }
 
     public Map<String, Object> createChannel(ChannelCreateRequest req, User currentUser) {
         List<String> members = req.getMembers() != null ? new ArrayList<>(req.getMembers()) : new ArrayList<>();

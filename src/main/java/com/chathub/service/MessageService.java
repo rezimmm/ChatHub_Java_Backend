@@ -223,6 +223,16 @@ public class MessageService {
                 .stream().limit(50).map(this::toMap).collect(Collectors.toList());
     }
 
+    public void deleteMessagesByChannel(String channelId) {
+        messageRepository.deleteByChannelId(channelId);
+        
+        // Broadcast clear event
+        Map<String, Object> event = new HashMap<>();
+        event.put("type", "messages_cleared");
+        event.put("channel_id", channelId);
+        wsHandler.broadcastToChannel(event, channelId);
+    }
+
     private Message findMessageOrThrow(String id) {
         return messageRepository.findByMessageId(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Message not found"));
